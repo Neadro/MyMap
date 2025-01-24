@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class MyMap <K, V> implements Book<K, V> {
+public class MyMap<K, V> implements Book<K, V> {
     private Node<K, V>[] hashTable;
     private int size;
     private float loadFactor;
@@ -15,12 +15,13 @@ public class MyMap <K, V> implements Book<K, V> {
             loadFactor *= 2;
             doubleArray();
         }
-        Node<K, V> newNode = new Node<>(key, value);
-        int index = hash(key);
 
+        Node<K, V> newNode = new Node<>(key, value);
+        int index = bucketIndex(key);
         if (hashTable[index] == null) {
             return simpleAdd(index, newNode);
         }
+
         List<Node<K, V>> listOfNode = hashTable[index].getNodes();
 
         for (Node<K, V> node : listOfNode) {
@@ -39,6 +40,12 @@ public class MyMap <K, V> implements Book<K, V> {
     }
 
     private boolean updateKey(final Node<K, V> nodeFromList, final Node<K, V> newNode, final V value) {
+        if(newNode.getKey() == null) {
+            if(nodeFromList.getKey() == null) {
+                nodeFromList.setValue(value);
+                return true;
+            }
+        }
         if (newNode.getKey().equals(nodeFromList.getKey()) && !newNode.getValue().equals(nodeFromList.getValue())) {
             nodeFromList.setValue(value);
             return true;
@@ -73,7 +80,7 @@ public class MyMap <K, V> implements Book<K, V> {
     }
 
     public boolean delete(final K key) {
-        int index = hash(key);
+        int index = bucketIndex(key);
         if (hashTable[index] == null) {
             return false;
         }
@@ -94,7 +101,7 @@ public class MyMap <K, V> implements Book<K, V> {
     }
 
     public Optional<V> get(final K key) {
-        int index = hash(key);
+        int index = bucketIndex(key);
         if (index < hashTable.length && hashTable[index] != null) {
             List<Node<K, V>> list = hashTable[index].getNodes();
             for (Node<K, V> node : list) {
@@ -110,11 +117,15 @@ public class MyMap <K, V> implements Book<K, V> {
         return size;
     }
 
-    private int hash(final K key) {
-        int hash = 31;
-        hash = hash * 17 + key.hashCode();
-        hash = hash ^ hash >>>16;
-        return hash % hashTable.length;
+    private int bucketIndex(final K key) {
+        if (key == null) {
+            return 0;
+        }
+        Node node = new Node<>(key, null);
+        int hashCodeBySergey = node.hashCode();
+        return hashCodeBySergey < 0
+                ? ((hashCodeBySergey % (hashTable.length / 2)) * (-2)) - 1
+                : (hashCodeBySergey % (hashTable.length / 2)) * 2;
     }
 
     public Iterator<V> iterator() {
@@ -150,6 +161,20 @@ public class MyMap <K, V> implements Book<K, V> {
         };
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (Node<K, V> node : hashTable) {
+            if (node != null) {
+                sb.append(node.toString());
+            }
+        }
+        sb.append("\n");
+        sb.append("size = " + size + "\n");
+        sb.append("loadFactor = " + loadFactor + "\n");
+        return sb.toString();
+    }
+
     private class Node<K, V> {
         private List<Node<K, V>> nodes;
         private int hash;
@@ -183,21 +208,32 @@ public class MyMap <K, V> implements Book<K, V> {
         }
 
         public int hashCode() {
+
             hash = 31;
+            if (key == null) {
+                return 0;
+            }
             hash = hash * 17 + key.hashCode();
-            hash = hash * 17 + value.hashCode();
+            if (value != null) {
+                hash = hash * 17 + value.hashCode();
+            }
+
             return hash;
         }
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj instanceof Node) {
-                Node<?, ?> node = (Node<?, ?>) obj;
-                return Objects.equals(key, node.getKey()) &&
-                        Objects.equals(value, node.getValue());
-            }
-            return false;
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            Node<?, ?> node = (Node<?, ?>) o;
+            return hash == node.hash && Objects.equals(getNodes(), node.getNodes()) && Objects.equals(getKey(), node.getKey()) && Objects.equals(getValue(), node.getValue());
+        }
+        @Override
+        public String toString() {
+            return "Node " +
+                    "nodes=" + nodes +
+                    ", hash=" + hash +
+                    ", key=" + key +
+                    ", value=" + value +
+                    "} \n";
         }
     }
 }

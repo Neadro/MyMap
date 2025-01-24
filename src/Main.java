@@ -7,8 +7,7 @@ public class Main {
         stringMap.insert("d", "e");
         stringMap.insert("e", "f");
         stringMap.insert("f", "g");
-        for (String s : stringMap) {
-            System.out.println(s);
-        }
+        stringMap.insert("g", "h");
+        System.out.println(stringMap);
     }
 }
