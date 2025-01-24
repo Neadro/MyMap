@@ -113,6 +113,7 @@ public class MyMap <K, V> implements Book<K, V> {
     private int hash(final K key) {
         int hash = 31;
         hash = hash * 17 + key.hashCode();
+        hash = hash ^ hash >>>16;
         return hash % hashTable.length;
     }
 
